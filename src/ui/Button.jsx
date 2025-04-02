@@ -52,9 +52,9 @@ const Button = styled.button`
   border: none;
   border-radius: var(--border-radius-sm);
   box-shadow: var(--shadow-sm);
-  transition: background 1000ms ease-in;
-  ${(props) => sizes[props.size] || sizes.medium}
-  ${(props) => variations[props.variation] || sizes.primary}
+  transition: background 100ms ease-in;
+  ${(props) => sizes[props.$size] || sizes.medium}
+  ${(props) => variations[props.$variation] || sizes.primary}
 `;
 
 Button.defaultProps = {

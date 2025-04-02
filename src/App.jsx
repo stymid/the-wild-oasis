@@ -55,6 +55,9 @@ const App = () => {
           success: { duration: 3000 },
           error: {
             duration: 5000,
+            style: {
+              color: "red",
+            },
           },
           style: {
             fontSize: "16px",

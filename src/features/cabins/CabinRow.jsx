@@ -1,8 +1,14 @@
 import styled from "styled-components";
 import { formatCurrency } from "../../utils/helpers";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteCabin } from "../../services/apiCabins";
+import { useState } from "react";
+import CreateCabinForm from "./CreateCabinForm";
+import { useDeleteCabin } from "./useDeleteCabin";
 import toast from "react-hot-toast";
+import CustomToast from "../../ui/CustomToast";
+import { CgCopy } from "react-icons/cg";
+import { MdOutlineDeleteOutline, MdModeEdit } from "react-icons/md";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { useCreateCabin } from "./useCreateCabin";
 
 const TableRow = styled.div`
   display: grid;
@@ -44,34 +50,72 @@ const Discount = styled.div`
 `;
 
 const CabinRow = ({ cabin }) => {
-  const { name, maxCapacity, regularPrice, discount, image, id } = cabin;
-  const queryClient = useQueryClient();
-  const { mutate, isPending } = useMutation({
-    mutationFn: deleteCabin,
-    onSuccess: () => {
-      toast.success("Cabin successfully deleted.");
-      queryClient.invalidateQueries({
-        queryKey: ["cabins"],
-      });
-    },
-    onError: (err) => {
-      // console.log(err.message);
+  const { id, name, maxCapacity, regularPrice, discount, image, description } =
+    cabin;
 
-      toast.error(err.message);
-    },
-  });
+  const [showForm, setShowForm] = useState(false);
+  const { deleteCabin, isDeleting } = useDeleteCabin();
+
+  const { createCabin, isCreating } = useCreateCabin();
+  function handleClick() {
+    deleteCabin(id, {
+      onError: (err) => {
+        toast.custom((t) => (
+          <CustomToast t={t} message={err.message} type="error" />
+        ));
+      },
+      onSuccess: () => {
+        toast.custom((t) => (
+          <CustomToast
+            t={t}
+            message={"delete was succesfully."}
+            type="success"
+          />
+        ));
+      },
+    });
+  }
+  function handleDuplicate() {
+    createCabin({
+      name: `copy of ${name}`,
+      maxCapacity,
+      regularPrice,
+      discount,
+      image,
+      description,
+    });
+  }
 
   return (
-    <TableRow role="row">
-      <Img src={image} />
-      <Cabin>{name}</Cabin>
-      <div>Fits up to {maxCapacity}</div>
-      <Price>{formatCurrency(regularPrice)}</Price>
-      <Discount>{formatCurrency(discount)}</Discount>
-      <button disabled={isPending} onClick={() => mutate(id)}>
-        delete
-      </button>
-    </TableRow>
+    <>
+      <TableRow role="row">
+        <Img src={image} />
+        <Cabin>{name}</Cabin>
+        <div>Fits up to {maxCapacity}</div>
+        <Price>{formatCurrency(regularPrice)}</Price>
+        {discount ? (
+          <Discount>{formatCurrency(discount)}</Discount>
+        ) : (
+          <span>&mdash;</span>
+        )}
+        <div>
+          <button disabled={isCreating} onClick={handleDuplicate}>
+            {isCreating ? <AiOutlineLoading3Quarters /> : <CgCopy />}
+          </button>
+          <button onClick={() => setShowForm((state) => !state)}>
+            <MdModeEdit />
+          </button>
+          <button disabled={isDeleting} onClick={handleClick}>
+            {isDeleting ? (
+              <AiOutlineLoading3Quarters />
+            ) : (
+              <MdOutlineDeleteOutline />
+            )}
+          </button>
+        </div>
+      </TableRow>
+      {showForm && <CreateCabinForm cabinToEdit={cabin} />}
+    </>
   );
 };
 

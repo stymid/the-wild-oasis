@@ -9,7 +9,7 @@ const Row = styled.div`
       gap: 1.6rem;
     `}
   ${(props) =>
-    props.$type === "hotizontal" &&
+    props.$type === "horizontal" &&
     css`
       justify-content: space-between;
       align-items: center;
