@@ -1,4 +1,3 @@
-import styled from "styled-components";
 import { useForm } from "react-hook-form";
 import { useRef } from "react";
 import toast from "react-hot-toast";
@@ -10,18 +9,14 @@ import Textarea from "../../ui/Textarea";
 import CustomToast from "../../ui/CustomToast";
 import FormRow from "../../ui/FormRow";
 import FileInput from "../../ui/FileInput";
-
 import { useCreateCabin } from "./useCreateCabin";
 import { useEditCabin } from "./useEditCabin";
 
-const Label = styled.label`
-  font-weight: 500;
-`;
-
-function CreateCabinForm({ cabinToEdit = {} }) {
+function CreateCabinForm({ cabinToEdit = {}, onCloseModal }) {
   const toastId = useRef(null);
   const { id: editId, ...editValue } = cabinToEdit;
   const isEditSession = Boolean(editId);
+
   const {
     register,
     handleSubmit,
@@ -31,7 +26,6 @@ function CreateCabinForm({ cabinToEdit = {} }) {
   } = useForm({
     defaultValues: isEditSession ? editValue : {},
   });
-  console.log(errors, isEditSession);
 
   const { isCreating, createCabin } = useCreateCabin();
   const { editCabin, isEditing } = useEditCabin();
@@ -42,11 +36,15 @@ function CreateCabinForm({ cabinToEdit = {} }) {
     ));
 
     const image = typeof data.image === "string" ? data.image : data.image[0];
+    console.log({ ...data, image });
+
     if (isEditSession) {
       editCabin(
         { newCabinData: { ...data, image }, editId },
         {
           onSuccess: () => {
+            console.log("that was an edit not create");
+
             toast.custom((t) => (
               <CustomToast
                 type="success"
@@ -55,6 +53,7 @@ function CreateCabinForm({ cabinToEdit = {} }) {
               />
             ));
             reset();
+            onCloseModal?.();
           },
           onError: (e) => {
             toast.custom((t) => (
@@ -87,6 +86,7 @@ function CreateCabinForm({ cabinToEdit = {} }) {
               />
             ));
             reset();
+            onCloseModal?.();
           },
         }
       );
@@ -96,7 +96,10 @@ function CreateCabinForm({ cabinToEdit = {} }) {
   }
   const isWorking = isCreating || isEditing;
   return (
-    <Form onSubmit={handleSubmit(onValid, onInValid)}>
+    <Form
+      onSubmit={handleSubmit(onValid, onInValid)}
+      type={onCloseModal ? "modal" : "regular"}
+    >
       <FormRow error={errors?.name?.message} label="Cabin Name">
         <Input
           disabled={isWorking}
@@ -171,14 +174,18 @@ function CreateCabinForm({ cabinToEdit = {} }) {
           accept="image/*"
           id="image"
           {...register("image", {
-            required: isEditSession || "This field is requiered!",
+            required: isEditSession ? false : "This field is required",
           })}
         />
       </FormRow>
 
       <FormRow>
         {/* type is an HTML attribute! */}
-        <Button $variation="secondary" type="reset" disabled={isWorking}>
+        <Button
+          $variation="secondary"
+          onClick={onCloseModal}
+          disabled={isWorking}
+        >
           Cancel
         </Button>
         <Button $variation="primary" disabled={isWorking}>

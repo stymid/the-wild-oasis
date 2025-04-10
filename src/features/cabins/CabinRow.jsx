@@ -1,26 +1,19 @@
 import styled from "styled-components";
 import { formatCurrency } from "../../utils/helpers";
-import { useState } from "react";
-import CreateCabinForm from "./CreateCabinForm";
 import { useDeleteCabin } from "./useDeleteCabin";
 import toast from "react-hot-toast";
 import CustomToast from "../../ui/CustomToast";
-import { CgCopy } from "react-icons/cg";
-import { MdOutlineDeleteOutline, MdModeEdit } from "react-icons/md";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+
+import { MdOutlineDeleteOutline } from "react-icons/md";
+
 import { useCreateCabin } from "./useCreateCabin";
 
-const TableRow = styled.div`
-  display: grid;
-  grid-template-columns: 0.6fr 1.8fr 2.2fr 1fr 1fr 1fr;
-  column-gap: 2.4rem;
-  align-items: center;
-  padding: 1.4rem 2.4rem;
-
-  &:not(:last-child) {
-    border-bottom: 1px solid var(--color-grey-100);
-  }
-`;
+import Modal from "../../ui/Modal";
+import ConfirmDelete from "../../ui/ConfirmDelete";
+import Table from "../../ui/Table";
+import Menus from "../../ui/Menus";
+import CreateCabinForm from "./CreateCabinForm";
+import { HiPencil, HiSquare2Stack } from "react-icons/hi2";
 
 const Img = styled.img`
   display: block;
@@ -53,10 +46,9 @@ const CabinRow = ({ cabin }) => {
   const { id, name, maxCapacity, regularPrice, discount, image, description } =
     cabin;
 
-  const [showForm, setShowForm] = useState(false);
   const { deleteCabin, isDeleting } = useDeleteCabin();
 
-  const { createCabin, isCreating } = useCreateCabin();
+  const { createCabin } = useCreateCabin();
   function handleClick() {
     deleteCabin(id, {
       onError: (err) => {
@@ -87,35 +79,51 @@ const CabinRow = ({ cabin }) => {
   }
 
   return (
-    <>
-      <TableRow role="row">
-        <Img src={image} />
-        <Cabin>{name}</Cabin>
-        <div>Fits up to {maxCapacity}</div>
-        <Price>{formatCurrency(regularPrice)}</Price>
-        {discount ? (
-          <Discount>{formatCurrency(discount)}</Discount>
-        ) : (
-          <span>&mdash;</span>
-        )}
-        <div>
-          <button disabled={isCreating} onClick={handleDuplicate}>
-            {isCreating ? <AiOutlineLoading3Quarters /> : <CgCopy />}
-          </button>
-          <button onClick={() => setShowForm((state) => !state)}>
-            <MdModeEdit />
-          </button>
-          <button disabled={isDeleting} onClick={handleClick}>
-            {isDeleting ? (
-              <AiOutlineLoading3Quarters />
-            ) : (
-              <MdOutlineDeleteOutline />
-            )}
-          </button>
-        </div>
-      </TableRow>
-      {showForm && <CreateCabinForm cabinToEdit={cabin} />}
-    </>
+    <Table.Row role="row">
+      <Img src={image} />
+      <Cabin>{name}</Cabin>
+      <div>Fits up to {maxCapacity}</div>
+      <Price>{formatCurrency(regularPrice)}</Price>
+      {discount ? (
+        <Discount>{formatCurrency(discount)}</Discount>
+      ) : (
+        <span>&mdash;</span>
+      )}
+      <div>
+        <Modal>
+          <Menus.Menu>
+            <Menus.Toggle id={id} />
+
+            <Menus.List id={id}>
+              <Menus.Button icon={<HiSquare2Stack />} onClick={handleDuplicate}>
+                Duplicate
+              </Menus.Button>
+
+              <Modal.Open opens="cabin-delete">
+                <Menus.Button icon={<MdOutlineDeleteOutline />}>
+                  Delete
+                </Menus.Button>
+              </Modal.Open>
+
+              <Modal.Open opens="cabin-update">
+                <Menus.Button icon={<HiPencil />}>Edit</Menus.Button>
+              </Modal.Open>
+            </Menus.List>
+          </Menus.Menu>
+
+          <Modal.Window name="cabin-update">
+            <CreateCabinForm cabinToEdit={cabin} />
+          </Modal.Window>
+          <Modal.Window name="cabin-delete">
+            <ConfirmDelete
+              resourceName={name}
+              onConfirm={handleClick}
+              disabled={isDeleting}
+            />
+          </Modal.Window>
+        </Modal>
+      </div>
+    </Table.Row>
   );
 };
 
